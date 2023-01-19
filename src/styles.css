@@ -1,0 +1,37 @@
+.App {
+  font-family: sans-serif;
+  text-align: center;
+  height: 100vh;
+}
+
+.node {
+  background: rgb(162, 201, 228);
+}
+
+.socket.input.number-value {
+  margin-right: -2px;
+}
+
+.socket.output.number-value {
+  margin-left: -2px;
+}
+
+.input {
+  margin-left: 105px;
+  margin-top: -12px;
+  margin-bottom: -12px;
+}
+
+.title {
+  margin-top: 12px;
+}
+/*.input {
+  margin-left: 100px;
+  margin-top: 12px;
+  margin-bottom: -12px;
+}
+
+.input-tittle {
+  margin-left: -300px;
+  margin-top: -120px;
+}*/
