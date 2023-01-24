@@ -64,7 +64,7 @@ export default async function(container, cafe) {
       <p><input type="submit" value="Выбрать"></input></p>
     </form>);
   }*/
-  await ss.loadSSGraph(cafe.cafeId, '17Aeb2-CjMjkUy0guvqcDIRWZGmyPD6hEkCwZ3iqxG5w'/*cafe.ssBackId*/, sheetName); //<<<<<
+  await ss.loadSSGraph(cafe.cafeId, /*'17Aeb2-CjMjkUy0guvqcDIRWZGmyPD6hEkCwZ3iqxG5w'*/cafe.ssBackId, sheetName); //<<<<<
 
   var editor = new Rete.NodeEditor("demo@0.1.0", container);
   global.editor = editor;
