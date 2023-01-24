@@ -91,7 +91,7 @@ function App() {
   }, []);
 
   if(!cafes)
-    return 'Получаем информацию о кафе от ' + process.env.REACT_APP_FEEDMER_URL+`/getAllCafeInfo`;
+    return 'Получаем информацию о кафе от ' + process.env.REACT_APP_FEEDMER_URL+`/getAllCafeInfo...`;
   const cafe = getCafeById(cafeId, cafes);
   if(cafe){
     return (
