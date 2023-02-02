@@ -8,20 +8,20 @@ var graphLoaded = false;
 export class Spreadsheet{
     constructor(){
         this.graph = null;
+        this.sheetName =  'Граф';
     }
-    loadSSGraph = async (cafeId, ssId, sheetName) => {        
+    loadSSGraph = async (cafeId, ssId) => {        
         try{
-            if((ssId === this.ssId) && (sheetName === this.sheetName))
+            if(ssId === this.ssId)
                 return;
             graphLoaded = false;
             this.cafeId = cafeId;
             this.ssId = ssId;
-            this.sheetName = sheetName;
-            setTimeout(() => {if(!graphLoaded) throw Error('timeOut')}, timeOut)
-            const doc = new GoogleSpreadsheet(this.ssId);
-            await doc.useServiceAccountAuth(apiSheetKey);
-            await doc.loadInfo();
-            const sheet = await doc.sheetsByTitle[this.sheetName];
+            //setTimeout(() => {if(!graphLoaded) throw Error('timeOut')}, timeOut)
+            this.doc = new GoogleSpreadsheet(this.ssId);
+            await this.doc.useServiceAccountAuth(apiSheetKey);
+            await this.doc.loadInfo();
+            const sheet = await this.doc.sheetsByTitle[this.sheetName];
             let res = await sheet.getRows();
             res.forEach(x => {
                 if (x._rawData[2] !== undefined) x._rawData[2] = x._rawData[2].trim();
@@ -37,6 +37,16 @@ export class Spreadsheet{
             //setError(e);
             console.error(`Cannot load graph from goodle with ssId = ${this.ssId}`, Error(e.message || e));
         }
+    }
+
+    getSheetUrlById = (sheetId) => {
+        return this.doc._spreadsheetUrl + '#gid=' + sheetId;
+    }
+
+    getSheetUrlByTittle = (tittle) => {
+        const sheet = this.doc.sheetsByTitle[tittle];
+        const url = (sheet)? this.getSheetUrlById(sheet.sheetId) : null;
+        return url;
     }
 
     toRete = async() => {
@@ -99,8 +109,12 @@ export class Spreadsheet{
     }
 
     saveRete = async(reteGraph) => {
-        let ssGraph = []
+        let ssGraph = [];
         for(let node in reteGraph.nodes){
+            let ssStep = [
+                //[reteGraph.nodes[node].name],
+                [{value: reteGraph.nodes[node].data.question}],
+            ]
             for(let output in reteGraph.nodes[node].outputs){
                 try{
                     let dest;
@@ -108,73 +122,116 @@ export class Spreadsheet{
                         dest = { name: "", data: { question: "" }};
                     else
                         dest = reteGraph.nodes[reteGraph.nodes[node].outputs[output].connections[0].node];
-                    ssGraph.push({
+                    ssStep.push([
+                        {value: output},
+                        {value: dest.name},
+                        {value: dest.data.question},
+                    ]);
+                    /*ssGraph.push({
                         step: reteGraph.nodes[node].name,
                         question: reteGraph.nodes[node].data.question,
                         answer: output,
                         nextStep: dest.name,
                         nextQuestion: dest.data.question,
-                    })
+                    })*/
                 }
                 catch{}
             }
+            await this.printArrayToSheet(ssStep, "Шаг " + reteGraph.nodes[node].name);
         }
-        await this.printArrayToSheet(ssGraph);
+        //await this.printArrayToSheet(ssGraph, "Граф (собранный)");
     }
 
-    printArrayToSheet = async(array) => {
+    printArrayToSheet = async(array, sheetName) => {
         try {
             let sheet;
-            const doc = new GoogleSpreadsheet(this.ssId);
+            /*const doc = new GoogleSpreadsheet(this.ssId);
             await doc.useServiceAccountAuth(apiSheetKey);
-            await doc.loadInfo();
+            await doc.loadInfo();*/
     
-            if(doc.sheetsByTitle[this.sheetName]) {
-                sheet = doc.sheetsByTitle[process.env.SHEET_NAME_TO_SAVE || this.sheetName];
+            if(this.doc.sheetsByTitle[sheetName]) {
+                sheet = this.doc.sheetsByTitle[sheetName];
                 sheet.clear();
             } else {
-                sheet = await doc.addSheet({
-                    "title": this.sheetName,
+                sheet = await this.doc.addSheet({
+                    "title": sheetName,
                     "gridProperties": {
-                        "rowCount": 6000,
+                        "rowCount": 30,
                         "columnCount": 30
                     }
                 });
             }
     
             await sheet.loadCells('A1:Z1');
-    
+
             if(array.length === 0) {
                 let initCell= await sheet.getCell(0,0);
                 initCell.value = "Нет данных";
             }
     
-            let i = 0;
-            for (let key in array[0]) {
-                let initCell= await sheet.getCell(0,i++);
-                initCell.value = key;
-            }
-            await sheet.saveUpdatedCells();
-    
-            await sheet.loadCells();
+            await sheet.loadCells('A1:Z'+array.length);
             for(let i=0; i<array.length; i++){
-                let j = 0;
-                for (let key in array[i]) {
-                    let cell = await sheet.getCell(i+1, j);
-                    if(array[i][key] instanceof Date)
-                        cell.value = array[i][key].toString();
-                    else
-                        if(key[0] !== '_')
-                            cell.value = array[i][key];
-                    j++;
+                if(array[i] === undefined || array[i] === null) continue;
+                for(let j=0; j<=array[i].length; j++)
+                {
+                    if(!array[i][j] || !(array[i][j].value)) continue;
+                    let cell = await sheet.getCell(i, j);
+                    Object.assign(cell, array[i][j]);    
                 }
             }
-            sheet.saveUpdatedCells();
+            await sheet.saveUpdatedCells();
         } catch (e) { 
             console.error(`printing to spreadsheet (id: ${this.ssId}) is failed`, e.message);
             //throw e; 
         }
     }
+
+    addNewStepSheet = async(stepName) => {   
+        try{     
+            const sheet = await this.doc.addSheet({
+                "title": 'Шаг ' + stepName,
+                "gridProperties": {
+                    "rowCount": 30,
+                    "columnCount": 30
+                }
+            });
+            const array = [
+                [{value: "question"}],
+                [{value: "answer1"}, {value: "nextStep1"}, {value: "nextQuestion1"}],
+
+            ]
+            await this.printArrayToSheet(array, 'Шаг ' + stepName);
+            await this.addStepToGraphSheet(stepName);
+            return sheet.sheetId;
+        }
+        catch(e){
+            console.error('addNewSheet failed!', e.message);
+        }
+    }
+
+    addStepToGraphSheet = async(stepName) => {
+        const sheet = await this.doc.sheetsByTitle[this.sheetName];
+        let rowCount = (await sheet.getRows()).length || 0;
+        rowCount = Math.ceil(rowCount / 30) * 30;
+    
+        await sheet.loadCells(`A${rowCount + 2}:E${rowCount + 32}`);
+        let j = 2;
+        for(let i = rowCount + 2; i < rowCount + 33; i++){
+            let cell = await sheet.getCell(i-1, 0);
+            Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";"${stepName}")`});    
+            cell = await sheet.getCell(i-1, 1);
+            Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(D${i});"";'Шаг ${stepName}'!A$1)`});    
+            cell = await sheet.getCell(i-1, 2);
+            Object.assign(cell, {value: `='Шаг ${stepName}'!A${j}`});   
+            cell = await sheet.getCell(i-1, 3);
+            Object.assign(cell, {value: `='Шаг ${stepName}'!B${j}`});   
+            cell = await sheet.getCell(i-1, 4);
+            Object.assign(cell, {value: `='Шаг ${stepName}'!C${j}`});  
+            j++; 
+        }
+        await sheet.saveUpdatedCells();
+    }
+    
 
     getQuestion = async(step) => { //change to UserId
         try{

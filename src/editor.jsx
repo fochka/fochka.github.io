@@ -6,32 +6,29 @@ import ConnectionPathPlugin from 'rete-connection-path-plugin';
 import AreaPlugin from "rete-area-plugin";
 import AutoArrangePlugin from 'rete-auto-arrange-plugin';
 import { StepNode } from "./Nodes";
-import { TextControl, ButtonControl, stepSocket } from "./Controls";
+import { TextControl, HrefControl, ButtonControl, stepSocket } from "./Controls";
 import { Spreadsheet } from "./spreadsheet.js";
 
 
 const ss = new Spreadsheet();
 global.ss = ss;
 
-const sheetName =  'Граф';
 
-//var stepSocket = new Rete.Socket("Соединить с другим шагом");
-
-
-class StepComponent extends Rete.Component {
+export class StepComponent extends Rete.Component {
   constructor(name, ssData) {
     super(name);
     this.ssData = ssData;
   }
 
   builder(node) {
+    node.addControl(new HrefControl(this.editor, "href", this.ssData.href)); 
     node.addControl(new TextControl(this.editor, "question", this.ssData.question)); 
     node.data = { "question": this.ssData.question };
     let inp = new Rete.Input("step", "", stepSocket, true);
     stepSocket.combineWith(inp);
     for(let i = 0; i < this.ssData.answers.length; i++){
       if(this.ssData.answers[i]){
-        let out = new Rete.Output(this.ssData.answers[i], this.ssData.answers[i], stepSocket, true);
+        let out = new Rete.Output(this.ssData.answers[i], this.ssData.answers[i], stepSocket, false);
         node.addOutput(out);
       }
     }
@@ -64,7 +61,7 @@ export default async function(container, cafe) {
       <p><input type="submit" value="Выбрать"></input></p>
     </form>);
   }*/
-  await ss.loadSSGraph(cafe.cafeId, /*'17Aeb2-CjMjkUy0guvqcDIRWZGmyPD6hEkCwZ3iqxG5w'*/cafe.ssBackId, sheetName); //<<<<<
+  await ss.loadSSGraph(cafe.cafeId, cafe.ssBackId);
 
   var editor = new Rete.NodeEditor("demo@0.1.0", container);
   global.editor = editor;
@@ -100,6 +97,7 @@ export default async function(container, cafe) {
       let component = new StepComponent(step, {        
         question: question,
         answers: answers,
+        href: ss.getSheetUrlByTittle('Шаг ' + step),
       });
       editor.register(component);
     }

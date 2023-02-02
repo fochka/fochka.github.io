@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import init from "./editor";
+import init, {StepComponent} from "./editor";
 import getAllCafeInfo from "./DBLib.js";
 
 import "./styles.css";
@@ -60,6 +60,22 @@ const clickArrange = () => {
   global.editor.trigger('arrange', 10);
 }
 
+const clickCreateStep = async () => {
+  if(!(global.editor)) return alert('Редактор еще не загружен');
+  const stepName = prompt('Название шага');
+  if(!stepName) return; 
+  const sheetId = await global.ss.addNewStepSheet(stepName);
+  if(!sheetId) return alert('Не удалось создать лист "Шаг ' + stepName + '" в гугл таблице. Возможно такой шаг уже создан');
+  const step = new StepComponent(stepName, {        
+    question: '',
+    answers: [],
+    href: global.ss.getSheetUrlById(sheetId),
+  }); 
+  global.editor.register(step);
+  global.editor.addNode(await step.createNode());
+
+}
+
 function getCafeById(cafeId, cafes){
   if(!cafeId) return false;
   const cafe = cafes.find(val => val.cafeId == cafeId);
@@ -102,6 +118,7 @@ function App() {
             <input type='button' value="Сохранить" onClick={clickSave} />
             <input type='button' value="Перестановка" onClick={clickArrange} />
             <input type='button' value="Выбор кафе" onClick={clickChangeCafe} />
+            <input type='button' value="Создать шаг" onClick={clickCreateStep} />
           </div>
           <div ref={el => init(el, cafe)} />
         </div>

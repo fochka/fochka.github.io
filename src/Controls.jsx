@@ -22,8 +22,38 @@ class MyReactControl extends React.Component {
 
   render() {
     return (
-      <input value={this.state.name} onChange={this.onChange.bind(this)} />
+      <input value={this.state.name} readonly/* onChange={this.onChange.bind(this)}*/ />
     );
+  }
+}
+
+class HrefComponent extends React.Component {
+  state = {};
+  componentDidMount() {
+    this.setState({
+      name: this.props.name
+    });
+  }
+
+  render(){
+    return (
+      <a href={this.state.name}>"Перейти к таблице"</a>
+    );
+
+  }
+}
+
+export class HrefControl extends Control {
+  constructor(emitter, key, name) {
+    super(key);
+    this.render = "react";
+    this.component = HrefComponent;
+    this.props = {
+      emitter,
+      id: key,
+      name,
+      //putData: () => this.putData.apply(this, arguments)
+    };
   }
 }
 
