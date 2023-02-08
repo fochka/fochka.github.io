@@ -22,8 +22,8 @@ class MyReactControl extends React.Component {
 
   render() {
     return (
-      <textarea readOnly>{this.state.name}</textarea>
-      //<input value={this.state.name} readonly/* onChange={this.onChange.bind(this)}*/ />
+      //<textarea readOnly>{this.state.name}</textarea>
+      <input value={this.state.name} readonly/* onChange={this.onChange.bind(this)}*/ />
     );
   }
 }
