@@ -22,7 +22,29 @@ class MyReactControl extends React.Component {
 
   render() {
     return (
-      <input value={this.state.name} readonly/* onChange={this.onChange.bind(this)}*/ />
+      <textarea readOnly>{this.state.name}</textarea>
+      //<input value={this.state.name} readonly/* onChange={this.onChange.bind(this)}*/ />
+    );
+  }
+}
+
+class ButtonComponent extends React.Component {
+  state = {};
+  componentDidMount() {
+    this.setState({
+      name: this.props.name
+    });
+  }
+  onClick(event) {
+    this.getNode().addOutput(
+      new Output('answer', 'answer', stepSocket, false)
+    );
+  }
+
+  render() {
+    return (
+      <button class="node_submit" type="button" onClick={this.onClick.bind(this)}>+</button>
+      //<input value={this.state.name} readonly/* onChange={this.onChange.bind(this)}*/ />
     );
   }
 }
@@ -72,7 +94,22 @@ export class TextControl extends Control {
 }
 
 export class ButtonControl extends Control {
-  constructor(emitter, key, text) {
+  constructor(emitter, key, name) {
+    super(key);
+    this.render = "react";
+    this.component = ButtonComponent;
+    this.props = {
+      emitter,
+      id: key,
+      name,
+      //putData: () => this.putData.apply(this, arguments)
+    };
+  }
+}
+
+
+/*export class ButtonControl extends Control {
+    constructor(emitter, key, text) {
     super(key);
     this.keyz = Math.random()
       .toString(36)
@@ -124,6 +161,6 @@ export class ButtonControl extends Control {
     this.scope.value = val;
     this._alight.scan();
   }
-}
+}*/
 
 export { stepSocket };

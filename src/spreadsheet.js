@@ -9,6 +9,7 @@ export class Spreadsheet{
     constructor(){
         this.graph = null;
         this.sheetName =  'Граф';
+        this.sheetsToDelete = [];
     }
     loadSSGraph = async (cafeId, ssId) => {        
         try{
@@ -47,6 +48,10 @@ export class Spreadsheet{
         const sheet = this.doc.sheetsByTitle[tittle];
         const url = (sheet)? this.getSheetUrlById(sheet.sheetId) : null;
         return url;
+    }
+
+    remeberToDeleteStep = (stepName) => {                
+        this.sheetsToDeletete.push(stepName);
     }
 
     toRete = async() => {
@@ -108,8 +113,31 @@ export class Spreadsheet{
         }
     }
 
+    delteSheets = async(sheetsToDelete, stepsCount) => {
+        if(!sheetsToDelete || !this.sheetName || (sheetsToDelete.length < 1)) return;
+        const graphSheet = await this.doc.sheetsByTitle[this.sheetName];
+        const rowCount = (sheetsToDelete.length + stepsCount) * 30 + 1;
+        await graphSheet.loadCells('A1:A' + rowCount);
+        for(let i = 0; i < sheetsToDelete.length; i++){          
+            const sheet = this.doc.sheetsByTitle['Шаг ' + sheetsToDelete[i]];
+            if(sheet) await sheet.delete();
+            //sheet.clearRows
+            let startIdx, endIdx = 0;
+            for(let j = 1; j < rowCount; j++){
+                let cell = graphSheet.getCell(j, 0);
+                if(cell.value == sheetsToDelete[i]) {
+                    if(!startIdx) startIdx = i;
+                    endIdx = i;
+                }
+            }
+            await sheet.clearRows(startIdx+1, endIdx+1);
+        }
+        this.sheetsToDelete.clear();        
+    }
+
     saveRete = async(reteGraph) => {
         let ssGraph = [];
+        await this.delteSheets(this.sheetsToDelete, Object.keys(reteGraph.nodes).length);
         for(let node in reteGraph.nodes){
             let ssStep = [
                 //[reteGraph.nodes[node].name],

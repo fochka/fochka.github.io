@@ -23,6 +23,7 @@ export class StepComponent extends Rete.Component {
   builder(node) {
     node.addControl(new HrefControl(this.editor, "href", this.ssData.href)); 
     node.addControl(new TextControl(this.editor, "question", this.ssData.question)); 
+    //node.addControl(new ButtonControl(this.editor, "addAnswer", "")); 
     node.data = { "question": this.ssData.question };
     let inp = new Rete.Input("step", "", stepSocket, true);
     stepSocket.combineWith(inp);
@@ -111,6 +112,9 @@ export default async function(container, cafe) {
       await engine.process(editor.toJSON());
     }
   );
+  editor.on('noderemoved', node => {
+    ss.remeberToDeleteStep(node.name);
+  });
 
   editor.fromJSON(await ss.toRete());
 
