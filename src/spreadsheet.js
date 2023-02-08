@@ -118,7 +118,9 @@ export class Spreadsheet{
         const graphSheet = await this.doc.sheetsByTitle[this.sheetName];
         const rowCount = (sheetsToDelete.length + stepsCount) * 30 + 1;
         await graphSheet.loadCells('A1:A' + rowCount);
-        for(let i = 0; i < sheetsToDelete.length; i++){ 
+        for(let i = 0; i < sheetsToDelete.length; i++){        
+            const sheet = this.doc.sheetsByTitle['Шаг ' + sheetsToDelete[i]];
+            if(sheet) await sheet.delete();
             //sheet.clearRows
             let startIdx = -1;
             let endIdx = -1;
@@ -129,11 +131,9 @@ export class Spreadsheet{
                     endIdx = j;
                 }
             }
-            await graphSheet.clearRows(startIdx+1, endIdx+1);         
-            const sheet = this.doc.sheetsByTitle['Шаг ' + sheetsToDelete[i]];
-            if(sheet) await sheet.delete();
+            await graphSheet.clearRows({start: startIdx+1, end: startIdx+30});  
         }
-        this.sheetsToDelete.clear();        
+        this.sheetsToDelete = [];        
     }
 
     saveRete = async(reteGraph) => {
