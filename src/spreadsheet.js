@@ -51,7 +51,7 @@ export class Spreadsheet{
     }
 
     remeberToDeleteStep = (stepName) => {                
-        this.sheetsToDeletete.push(stepName);
+        this.sheetsToDelete.push(stepName);
     }
 
     toRete = async() => {
@@ -118,19 +118,20 @@ export class Spreadsheet{
         const graphSheet = await this.doc.sheetsByTitle[this.sheetName];
         const rowCount = (sheetsToDelete.length + stepsCount) * 30 + 1;
         await graphSheet.loadCells('A1:A' + rowCount);
-        for(let i = 0; i < sheetsToDelete.length; i++){          
-            const sheet = this.doc.sheetsByTitle['Шаг ' + sheetsToDelete[i]];
-            if(sheet) await sheet.delete();
+        for(let i = 0; i < sheetsToDelete.length; i++){ 
             //sheet.clearRows
-            let startIdx, endIdx = 0;
+            let startIdx = -1;
+            let endIdx = -1;
             for(let j = 1; j < rowCount; j++){
                 let cell = graphSheet.getCell(j, 0);
                 if(cell.value == sheetsToDelete[i]) {
-                    if(!startIdx) startIdx = i;
-                    endIdx = i;
+                    if(startIdx<0) startIdx = j;
+                    endIdx = j;
                 }
             }
-            await sheet.clearRows(startIdx+1, endIdx+1);
+            await graphSheet.clearRows(startIdx+1, endIdx+1);         
+            const sheet = this.doc.sheetsByTitle['Шаг ' + sheetsToDelete[i]];
+            if(sheet) await sheet.delete();
         }
         this.sheetsToDelete.clear();        
     }
@@ -244,7 +245,7 @@ export class Spreadsheet{
     
         await sheet.loadCells(`A${rowCount + 2}:E${rowCount + 32}`);
         let j = 2;
-        for(let i = rowCount + 2; i < rowCount + 33; i++){
+        for(let i = rowCount + 2; i < rowCount + 32; i++){
             let cell = await sheet.getCell(i-1, 0);
             Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";"${stepName}")`});    
             cell = await sheet.getCell(i-1, 1);
