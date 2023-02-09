@@ -36,15 +36,20 @@ class ButtonComponent extends React.Component {
     });
   }
   onClick(event) {
-    this.getNode().addOutput(
-      new Output('answer', 'answer', stepSocket, false)
-    );
+    const node = this.props.emitter.nodes.find(x => {return this.props.name === x.name})
+    if(node){
+      node.addOutput(
+        new Output('answer' + (node.outputs.size + 1), 'answer' + (node.outputs.size + 1), stepSocket, false)
+      );
+      node.update();
+    }
   }
 
   render() {
     return (
-      <button class="node_submit" type="button" onClick={this.onClick.bind(this)}>+</button>
-      //<input value={this.state.name} readonly/* onChange={this.onChange.bind(this)}*/ />
+      <div class="right_div">
+        <button class="node_submit" type="button" onClick={this.onClick.bind(this)}>+</button>
+      </div>
     );
   }
 }
@@ -106,61 +111,5 @@ export class ButtonControl extends Control {
     };
   }
 }
-
-
-/*export class ButtonControl extends Control {
-    constructor(emitter, key, text) {
-    super(key);
-    this.keyz = Math.random()
-      .toString(36)
-      .substr(2, 9);
-    this.emitter = emitter;
-    this.type = "Button";
-    this.template =
-      '<input id="node_short_txt" placeholder="Блюдо" type="text" :value="value_txt" @input="change_txt($event)"/> <button class="node_submit" type="button" @click="change_btn($event)" />{{text}}';
-
-    this.scope = {
-      value_text: "",
-      text: text,
-      change_txt: this.change_txt.bind(this),
-      change_btn: this.change_btn.bind(this)
-    };
-  }
-
-  change_btn(e) {
-    let outputs = this.getNode().outputs;
-
-    if (this.scope.value_text !== undefined && this.scope.value_text !== "") {
-      this.putData(this.scope.value_text, this.scope.value_text);
-      this.getNode().addOutput(
-        new Output(this.keyz, this.scope.value_text, stepSocket, true)
-      );
-      console.log(outputs);
-      this.scope.value_text = "";
-      this.emitter.trigger("process");
-      this.getNode()._alight.scan();
-    }
-  }
-
-  change_txt(e) {
-    this.scope.value_text = e.target.value;
-    this.update();
-  }
-
-  update() {
-    if (this.key) {
-      this.putData(this.key, this.scope.value);
-    }
-    this.emitter.trigger("process");
-    this._alight.scan();
-  }
-
-  mounted() {}
-
-  setValue(val) {
-    this.scope.value = val;
-    this._alight.scan();
-  }
-}*/
 
 export { stepSocket };

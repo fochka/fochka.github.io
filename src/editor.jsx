@@ -23,7 +23,7 @@ export class StepComponent extends Rete.Component {
   builder(node) {
     node.addControl(new HrefControl(this.editor, "href", this.ssData.href)); 
     node.addControl(new TextControl(this.editor, "question", this.ssData.question)); 
-    //node.addControl(new ButtonControl(this.editor, "addAnswer", "")); 
+    node.addControl(new ButtonControl(this.editor, "addAnswer", this.name)); 
     node.data = { "question": this.ssData.question };
     let inp = new Rete.Input("step", "", stepSocket, true);
     stepSocket.combineWith(inp);

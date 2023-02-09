@@ -25,6 +25,11 @@
 .title {
   margin-top: 12px;
 }
+
+.node_submit{
+  float: left;
+  margin-top: 15px;
+}
 /*.input {
   margin-left: 100px;
   margin-top: 12px;

@@ -249,7 +249,7 @@ export class Spreadsheet{
             let cell = await sheet.getCell(i-1, 0);
             Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";"${stepName}")`});    
             cell = await sheet.getCell(i-1, 1);
-            Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(D${i});"";'Шаг ${stepName}'!A$1)`});    
+            Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";'Шаг ${stepName}'!A$1)`});    
             cell = await sheet.getCell(i-1, 2);
             Object.assign(cell, {value: `='Шаг ${stepName}'!A${j}`});   
             cell = await sheet.getCell(i-1, 3);
