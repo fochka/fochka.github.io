@@ -1,0 +1,7 @@
+.vscode
+node_modules
+npm-debug.log
+src/client_secret_google_sheets.json
+
+# Local development
+*.env

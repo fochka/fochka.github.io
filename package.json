@@ -1,0 +1,41 @@
+{
+  "name": "retejs-react-renderer",
+  "version": "1.0.0",
+  "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
+  "keywords": [],
+  "main": "src/index.js",
+  "dependencies": {
+    "bootstrap": "^5.2.3",
+    "dotenv": "^16.0.3",
+    "google-spreadsheet": "^3.3.0",
+    "http2": "^3.3.7",
+    "react": "16.8.3",
+    "react-dom": "16.8.3",
+    "react-scripts": "2.1.8",
+    "rete": "1.4.1",
+    "rete-area-plugin": "0.2.1",
+    "rete-auto-arrange-plugin": "^0.5.0-rc.1",
+    "rete-connection-path-plugin": "^0.3.1",
+    "rete-connection-plugin": "0.7.0",
+    "rete-context-menu-plugin": "0.3.7",
+    "rete-react-render-plugin": "0.2.0",
+    "universal-cookie": "^4.0.4"
+  },
+  "devDependencies": {
+    "typescript": "3.3.3"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "author": "",
+  "license": "ISC"
+}

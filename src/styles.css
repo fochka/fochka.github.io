@@ -1,0 +1,177 @@
+.App {
+  font-family: sans-serif;
+  text-align: center;
+  height: 100vh;
+  color: #11324b;
+  font-size: 14px;
+}
+
+body {
+  margin: 0;
+}
+
+.header {
+  -webkit-box-shadow: 0px 4px 4px 0px rgba(34, 60, 80, 0.5);
+  -moz-box-shadow: 0px 4px 4px 0px rgba(34, 60, 80, 0.5);
+  box-shadow: 0px 4px 4px 0px rgba(34, 60, 80, 0.5);
+  padding: 3px 10px 3px;
+  border-bottom: 1px solid #888;
+  border-top: 1px solid #888;
+}
+
+#canvas {
+  background: #0a0a0a04;
+}
+
+.node {
+  background: rgb(170, 200, 221);
+  min-height: 160px;
+}
+
+.socket.input.number-value {
+  margin-right: -2px;
+}
+
+.socket.output.number-value {
+  margin-left: -2px;
+}
+
+.input {
+  margin-left: 105px;
+  margin-top: -12px;
+  margin-bottom: -12px;
+}
+
+.title {
+  margin-top: 12px;
+}
+
+.connection .main-path {
+  fill: none;
+  stroke-width: 1px;
+  stroke: #b1b1d1;
+}
+
+.menu_button,
+.node_submit {
+  background-color: #e1ecf4;
+  border-radius: 3px;
+  border: 1px solid #7aa7c7;
+  box-shadow: rgba(255, 255, 255, .7) 0 1px 0 0 inset;
+  box-sizing: border-box;
+  color: #285f86;
+  cursor: pointer;
+  display: inline-block;
+  font-family: -apple-system,system-ui,"Segoe UI","Liberation Sans",sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.15385;
+  margin: 0 1px;
+  outline: none;
+  padding: 4px .8em 6px;
+  position: relative;
+  text-align: center;
+}
+
+.menu_button:hover,
+.menu_button:focus,
+.node_submit:hover,
+.node_submit:focus {
+  background-color: #b3d3ea;
+  color: #2c5777;
+}
+
+.menu_button:focus {
+  box-shadow: 0 0 0 4px rgba(0, 149, 255, .15);
+}
+
+.menu_button:active,
+.node_submit:active {
+  background-color: #a0c7e4;
+  box-shadow: none;
+  color: #2c5777;
+}
+/* CSS */
+.step_button {
+  align-items: center;
+  background-color: #0A66C2;
+  border: 0;
+  border-radius: 100px;
+  margin: 3px 15px;
+  box-sizing: border-box;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: -apple-system,system-ui,"Segoe UI","Liberation Sans",sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  justify-content: center;
+  line-height: 20px;
+  max-width: 480px;
+  min-height: 36px;
+  min-width: 0px;
+  overflow: hidden;
+  padding: 0px 12px 2px;
+  text-align: center;
+  touch-action: manipulation;
+  transition: background-color 0.167s cubic-bezier(0.4, 0, 0.2, 1) 0s, box-shadow 0.167s cubic-bezier(0.4, 0, 0.2, 1) 0s, color 0.167s cubic-bezier(0.4, 0, 0.2, 1) 0s;
+  user-select: none;
+  -webkit-user-select: none;
+  vertical-align: middle;
+}
+
+.step_button:hover,
+.step_button:focus { 
+  background-color: #16437E;
+  color: #ffffff;
+}
+
+.step_button:active {
+  background: #09223b;
+  color: rgb(255, 255, 255, .7);
+}
+
+select {
+  background-color: #fff;
+  border: 1px solid #d5d9d9;
+  border-radius: 3px;
+  box-sizing: border-box;
+  color: #0f1111;
+  cursor: pointer;
+  display: inline-block;
+  font-family: "Amazon Ember",sans-serif;
+  font-size: 13px;
+  line-height: 29px;
+  padding: 0 2px;
+  margin: 0 5px;
+  touch-action: manipulation;
+  vertical-align: middle;
+}
+
+select {
+  background-color: #f7fafa;
+}
+
+select {
+  border-color: #008296;
+  outline: 0;
+}
+/*.input {
+  margin-left: 100px;
+  margin-top: 12px;
+  margin-bottom: -12px;
+}
+
+.input-tittle {
+  margin-left: -300px;
+  margin-top: -120px;
+}*/
+
+.node_submit{
+  float: left;
+  margin-top: 10px;
+  padding: 0 8px 5px;
+  border-radius: 10px;
+  font-size: 20px;
+  border: 1px solid #2f2da7;
+}
