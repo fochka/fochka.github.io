@@ -47,6 +47,7 @@ export class StepComponent extends Rete.Component {
 }
 
 export default async function(container, cafe) {
+  global.editorIsLoaded = false;
   if(!cafe) return;
   if((global.editor) && (global.editor.components.size > 0)) return;
   /*const cafes = await cafePromise;
@@ -113,7 +114,7 @@ export default async function(container, cafe) {
     ss.remeberToDeleteStep(node.name);
   });
 
-  editor.fromJSON(await ss.toRete());
+  await editor.fromJSON(await ss.toRete());
 
   editor.view.resize();
   AreaPlugin.zoomAt(editor);

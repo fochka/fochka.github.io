@@ -89,6 +89,7 @@ function App() {
   }, []);
   
   function clickChangeCafe() {
+    if(!(global.editorIsLoaded)) return alert('Редактор еще не загружен');
     window.location.search = '';
     setCafes();
   }
@@ -96,32 +97,32 @@ function App() {
   function clickSave() {
     if(!(global.editorIsLoaded)) return alert('Редактор еще не загружен');
     try{
-      global.editorIsLoaded = true;
+      global.editorIsLoaded = false;
       setDisplaySaving('block');
       global.ss.saveRete(global.editor.toJSON()).then(
-        result => { setDisplaySaving('none'); global.editorIsLoaded = false; return alert('Сценарий сохранен'); },
-        error => { setDisplaySaving('none'); global.editorIsLoaded = false; return alert('Сценарий не сохранен'); }
+        result => { setDisplaySaving('none'); global.editorIsLoaded = true; return alert('Сценарий сохранен'); },
+        error => { setDisplaySaving('none'); global.editorIsLoaded = true; return alert('Сценарий не сохранен'); }
       );
     }
     catch(e){
       setDisplaySaving('none'); 
-      global.editorIsLoaded = false;
+      global.editorIsLoaded = true;
       return alert('Сценарий не сохранен, ошибка ' + e.message)
     }
   };
 
   function generateGraphSheet() {
     if(!(global.editorIsLoaded)) return alert('Редактор еще не загружен');
-    global.editorIsLoaded = true;
+    global.editorIsLoaded = false;
     if(!window.confirm('Граф буден сохранен в лист "Граф (сгенерированный)". Если такой лист уже существует, он будет перезаписан. Продолжить?')) return;
     try{
       global.ss.generateGraphSheet('Граф (сгенерированный)', global.editor.toJSON()).then(
-        result => { global.editorIsLoaded = false; return alert('Лист графа успешно создан'); },
-        error => { global.editorIsLoaded = false; return alert('Не удалость создать лист графа'); }
+        result => { global.editorIsLoaded = true; return alert('Лист графа успешно создан'); },
+        error => { global.editorIsLoaded = true; return alert('Не удалость создать лист графа'); }
       );
     }
     catch(e){
-      global.editorIsLoaded = false;
+      global.editorIsLoaded = true;
       return alert('Сценарий не сохранен, ошибка ' + e.message)
     }
   };
@@ -192,15 +193,17 @@ function App() {
               <h1> Сохраняем... </h1>
             </div>
             <div id='canvas' ref={el => (init(el, cafe))
-              .then(() => { setDisplayLoading('none') } )
+              .then(() => { if(global.editorIsLoaded) setDisplayLoading('none') } )
               .catch(e => {
                 try {
-                  if(!e.includes('style')) {
-                    alert('Не удалось загрузить граф' +e); 
-                    console.error(e);
-                  }
-                } catch { alert('Не удалось загрузить граф' +e);console.error(e);}
-                setDisplayLoading('none') }) 
+                  if(!e.message.includes('style')) throw e;//setDisplayLoading('block');
+                  //else throw e;
+                } catch { 
+                  alert('Не удалось загрузить граф' +e);
+                  console.error(e);
+                  setDisplayLoading('none')
+                }
+                }) 
               } />
           </div>
         </div>
