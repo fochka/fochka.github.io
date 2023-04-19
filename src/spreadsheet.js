@@ -138,7 +138,7 @@ export class Spreadsheet {
                     //if(this.graph[i].answer == 'Назад') continue;
                     let nodeIdx = this.findNodeIdxByStep(reteGraph, step);
                     let nextNodeIdx = this.findNodeIdxByStep(reteGraph, JSON.parse(this.graph[step].nextSteps[i]).value);
-                    if((nextNodeIdx === false)||(nodeIdx === false)) continue;
+                    if((nextNodeIdx === false)||(nodeIdx === false)||(nextNodeIdx === undefined)||(nodeIdx === undefined)) continue;
                     reteGraph.nodes[nodeIdx].outputs[this.graph[step].answers[i]] = {  
                         connections: [ 
                             {
@@ -155,7 +155,9 @@ export class Spreadsheet {
                     } )
                 }
                 catch{
-                    console.error(`load connection failed between steps "${this.graph[i].step}" and "${this.graph[i].nextStep}"`)
+                    try{
+                        console.error(`load connection failed between steps "${step}" and "${JSON.parse(this.graph[step].nextSteps[i]).value}"`)
+                    }catch{}
                 }
             }
         }
@@ -371,19 +373,17 @@ export class Spreadsheet {
         }
     
         await sheet.loadCells(`A${rowCount + 2}:E${rowCount + oneStepRowCount +2}`);
-        let j = 2;
+        let cell = await sheet.getCell(rowCount+1, 2);
+        Object.assign(cell, {value: `=FILTER('Шаг ${stepName}'!A2:A${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!A2:A${oneStepRowCount}))))`});   
+        cell = await sheet.getCell(rowCount+1, 3);
+        Object.assign(cell, {value: `=FILTER('Шаг ${stepName}'!B2:B${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!B2:B${oneStepRowCount}))))`});   
+        cell = await sheet.getCell(rowCount+1, 4);
+        Object.assign(cell, {value: `=FILTER('Шаг ${stepName}'!C2:C${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!C2:C${oneStepRowCount}))))`});   
         for(let i = rowCount + 2; i < rowCount + oneStepRowCount + 2; i++){
             let cell = await sheet.getCell(i-1, 0);
             Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";"${stepName}")`});    
             cell = await sheet.getCell(i-1, 1);
-            Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";'Шаг ${stepName}'!A$1)`});    
-            cell = await sheet.getCell(i-1, 2);
-            Object.assign(cell, {value: `='Шаг ${stepName}'!A${j}`});   
-            cell = await sheet.getCell(i-1, 3);
-            Object.assign(cell, {value: `='Шаг ${stepName}'!B${j}`});   
-            cell = await sheet.getCell(i-1, 4);
-            Object.assign(cell, {value: `='Шаг ${stepName}'!C${j}`});  
-            j++; 
+            Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";FILTER('Шаг ${stepName}'!A$1; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!A$1)))))`}); 
         }
         await sheet.saveUpdatedCells();
     }

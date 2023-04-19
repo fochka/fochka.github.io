@@ -29,11 +29,16 @@ export class StepComponent extends Rete.Component {
     let inp = new Rete.Input("step", "", stepSocket, true);
     stepSocket.combineWith(inp);
     for(let i = 0; i < this.ssData.answers.length; i++){
-      if((this.ssData.answers[i]) && (this.ssData.answers[i].includes('value'))) {
-        let obj = JSON.parse(this.ssData.answers[i]);
-        if ((!obj.value) && (!obj.formula)) continue;
-        let out = new Rete.Output(this.ssData.answers[i], this.ssData.answers[i], stepSocket, false);
-        node.addOutput(out);
+      try {
+        if((this.ssData.answers[i]) && (this.ssData.answers[i].includes('value'))) {
+          let obj = JSON.parse(this.ssData.answers[i]);
+          if ((!obj.value) && (!obj.formula)) continue;
+          let out = new Rete.Output(this.ssData.answers[i], this.ssData.answers[i], stepSocket, false);
+          node.addOutput(out);
+        }
+      }
+      catch(e) {
+        console.error(e);
       }
     }
     
@@ -77,6 +82,9 @@ export default async function(container, cafe) {
   });
   editor.use(ContextMenuPlugin);
   editor.use(ConnectionPathPlugin, {
+    curve: ConnectionPathPlugin.curveBumpY, // curve identifier (ConnectionPathPlugin.curveStepBefore)
+    //options: { vertical: true, curvature: 0.1 }, // optional ( vertical: false, curvature: 0.2)
+    arrow: { color: '#b1b1d4', marker: 'M2,-7 L2,7 L18,0 z' },
     transformer: () => ([x1, y1, x2, y2]) => [
       [x1, y1], 
       [x1+70, y1], 
@@ -84,9 +92,6 @@ export default async function(container, cafe) {
       (y2-y1 < 50)? [x2, y2-50]: [x2, y2], 
       [x2, y2],
     ],
-    curve: ConnectionPathPlugin.curveBumpY, // curve identifier (ConnectionPathPlugin.curveStepBefore)
-    //options: { vertical: true, curvature: 0.1 }, // optional ( vertical: false, curvature: 0.2)
-    arrow: { color: '#b1b1d4', marker: 'M2,-7 L2,7 L18,0 z' },
   });
   editor.use(AutoArrangePlugin, { margin: {x: 10, y: 10 }, depth: 0 });
 
