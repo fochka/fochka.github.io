@@ -12,30 +12,35 @@ global.editorIsLoaded = false;
 global.emptyAnswerStr = ' — ';
 const {useState, useEffect} = React;
 const clickArrange = () => {
-  if(!(global.editor)) return alert('Редактор еще не загружен');
+  if(!(global.editor)) return alert('Редактор занят');
   global.editor.trigger('arrange', 10);
 }
 
 const clickCreateStep = async () => {
-  if(!(global.editorIsLoaded)) return alert('Редактор еще не загружен');
+  if(!(global.editorIsLoaded)) return alert('Редактор занят');
   const stepName = prompt('Название шага');
   if(!stepName) return; 
   try {
     if (global.editor.getComponent(stepName)) return alert('Шаг с таким именем уже зарегистрирован');
   } catch{}
-  const sheetId = await global.ss.addNewStepSheet(stepName);
-  if(!sheetId) return alert('Не удалось создать лист "Шаг ' + stepName + '" в гугл таблице. Возможно такой шаг уже создан');
-  const step = new StepComponent(stepName, {        
-    question: {value: 'question'},
-    answers: [ JSON.stringify({value: 'answer'}) ],
-    href: global.ss.getSheetUrlById(sheetId),
-  }); 
-  global.editor.register(step);
-  global.editor.addNode(await step.createNode());
+  try {
+    const sheetId = await global.ss.addNewStepSheet(stepName);
+    if(!sheetId) throw new Error('No sheetId');
+    const step = new StepComponent(stepName, {        
+      question: {value: 'question'},
+      answers: [ JSON.stringify({value: 'answer'}) ],
+      href: global.ss.getSheetUrlById(sheetId),
+    }); 
+    global.editor.register(step);
+    global.editor.addNode(await step.createNode());
+  }
+  catch{
+    return alert('Не удалось создать лист "Шаг ' + stepName + '" в гугл таблице. Возможно такой шаг уже создан');
+  }
 }
 
 const clickImport = async () => {
-  if(!(global.editorIsLoaded)) return alert('Редактор еще не загружен');
+  if(!(global.editorIsLoaded)) return alert('Редактор занят');
   const ss = new Spreadsheet();
   await ss.loadSSGraph(-1, prompt('ID гугл-таблицы:'));
   let graph1 = await ss.toRete();
@@ -89,13 +94,13 @@ function App() {
   }, []);
   
   function clickChangeCafe() {
-    if(!(global.editorIsLoaded)) return alert('Редактор еще не загружен');
+    if(!(global.editorIsLoaded)) return alert('Редактор занят');
     window.location.search = '';
     setCafes();
   }
 
   function clickSave() {
-    if(!(global.editorIsLoaded)) return alert('Редактор еще не загружен');
+    if(!(global.editorIsLoaded)) return alert('Редактор занят');
     try{
       global.editorIsLoaded = false;
       setDisplaySaving('block');
@@ -112,9 +117,9 @@ function App() {
   };
 
   function generateGraphSheet() {
-    if(!(global.editorIsLoaded)) return alert('Редактор еще не загружен');
-    global.editorIsLoaded = false;
+    if(!(global.editorIsLoaded)) return alert('Редактор занят');
     if(!window.confirm('Граф буден сохранен в лист "Граф (сгенерированный)". Если такой лист уже существует, он будет перезаписан. Продолжить?')) return;
+    global.editorIsLoaded = false;
     try{
       global.ss.generateGraphSheet('Граф (сгенерированный)', global.editor.toJSON()).then(
         result => { global.editorIsLoaded = true; return alert('Лист графа успешно создан'); },
@@ -193,13 +198,13 @@ function App() {
               <h1> Сохраняем... </h1>
             </div>
             <div id='canvas' ref={el => (init(el, cafe))
-              .then(() => { if(global.editorIsLoaded) setDisplayLoading('none') } )
+              .then((res) => { if (res !== false) setDisplayLoading('none') } )
               .catch(e => {
                 try {
                   if(!e.message.includes('style')) throw e;//setDisplayLoading('block');
                   //else throw e;
                 } catch { 
-                  alert('Не удалось загрузить граф' +e);
+                  alert('Не удалось загрузить граф ' +e);
                   console.error(e);
                   setDisplayLoading('none')
                 }

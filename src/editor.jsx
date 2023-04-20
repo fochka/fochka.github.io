@@ -53,12 +53,11 @@ export class StepComponent extends Rete.Component {
 }
 
 export default async function(container, cafe) {
-  if (loading) return
+  if (loading) return false;
   loading = true;
   try {
-    global.editorIsLoaded = false;
     if(!cafe) return;
-    if((global.editor) && (global.editor.components.size > 0)) return;
+    global.editorIsLoaded = false;
     /*const cafes = await cafePromise;
     let cafe;
     if(cafeId)
@@ -132,6 +131,7 @@ export default async function(container, cafe) {
   }
   catch(e) {
     loading = false;
+    global.editorIsLoaded = true;
     throw e;
   }
 }

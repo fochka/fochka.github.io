@@ -21,6 +21,7 @@ export class Spreadsheet {
             await this.doc.useServiceAccountAuth(apiSheetKey);
             await this.doc.loadInfo();
             const sheet = await this.doc.sheetsByTitle[this.sheetName];
+            if (!sheet) throw new Error('Не найден лист "' + this.sheetName + '"');
             let res = await sheet.getRows();
             await sheet.loadCells({endColumnIndex: 6});
             for (let i = 0; i < res.length; i++){
@@ -252,42 +253,49 @@ export class Spreadsheet {
     }
 
     generateGraphSheet = async(sheetName, reteGraph) => {
-        const oldSheetName = this.sheetName;
-        this.sheetName = sheetName;
-    
-        let sheet;
-        if(this.doc.sheetsByTitle[sheetName]) {
-            sheet = this.doc.sheetsByTitle[sheetName];
-            sheet.clear();
-        } else {
-            sheet = await this.doc.addSheet({
-                "title": sheetName,
-                "gridProperties": {
-                    "rowCount": 6000,
-                    "columnCount": 30
-                }
-            });
-        }
-        await sheet.loadCells('A1:Z1');
-        let cell = await sheet.getCell(0, 0);
-        Object.assign(cell, { value: 'step' } ); 
-        cell = await sheet.getCell(0, 1);
-        Object.assign(cell, { value: 'question' } );
-        cell = await sheet.getCell(0, 2);
-        Object.assign(cell, { value: 'answer' } );
-        cell = await sheet.getCell(0, 3);
-        Object.assign(cell, { value: 'nextStep' } );
-        cell = await sheet.getCell(0, 4);
-        Object.assign(cell, { value: 'nextQuestion' } );
-        await sheet.saveUpdatedCells();
+        try {
+            const oldSheetName = this.sheetName;
+            this.sheetName = sheetName;
+        
+            let sheet;
+            if(this.doc.sheetsByTitle[sheetName]) {
+                sheet = this.doc.sheetsByTitle[sheetName];
+                sheet.clear();
+            } else {
+                sheet = await this.doc.addSheet({
+                    "title": sheetName,
+                    "gridProperties": {
+                        "rowCount": 6000,
+                        "columnCount": 30
+                    }
+                });
+            }
+            await sheet.loadCells('A1:E1');
+            let cell = await sheet.getCell(0, 0);
+            Object.assign(cell, { value: 'step' } ); 
+            cell = await sheet.getCell(0, 1);
+            Object.assign(cell, { value: 'question' } );
+            cell = await sheet.getCell(0, 2);
+            Object.assign(cell, { value: 'answer' } );
+            cell = await sheet.getCell(0, 3);
+            Object.assign(cell, { value: 'nextStep' } );
+            cell = await sheet.getCell(0, 4);
+            Object.assign(cell, { value: 'nextQuestion' } );
+            await sheet.saveUpdatedCells();
 
-        let rowIdx = 0;
-        for(let node in reteGraph.nodes){
-            let ssStep = reteGraph.nodes[node].name;
-            await this.addStepToGraphSheet(ssStep, rowIdx);
-            rowIdx += oneStepRowCount;
+            let rowIdx = 0;
+            for(let node in reteGraph.nodes){
+                let ssStep = reteGraph.nodes[node].name;
+                await this.addStepToGraphSheet(ssStep, rowIdx);
+                rowIdx += oneStepRowCount;
+            }
+            this.sheetName = oldSheetName;
         }
-        this.sheetName = oldSheetName;
+        catch (e) {
+            console.error('generateGraphSheet failed!', e);
+            throw e;
+
+        }
     }
 
     printArrayToSheet = async(array, sheetName) => {
@@ -310,14 +318,13 @@ export class Spreadsheet {
                 });
             }
     
-            await sheet.loadCells('A1:Z1');
+            await sheet.loadCells(['A1:Z1', 'A1:C'+array.length]);
 
             if (array.length === 0) {
                 let initCell= await sheet.getCell(0,0);
                 initCell.value = "Нет данных";
             }
     
-            await sheet.loadCells('A1:Z'+array.length);
             for (let i=0; i<array.length; i++) {
                 if(array[i] === undefined || array[i] === null) continue;
                 for(let j=0; j<=array[i].length; j++)  {
@@ -329,7 +336,7 @@ export class Spreadsheet {
             await sheet.saveUpdatedCells();
         } catch (e) { 
             console.error(`printing to spreadsheet (id: ${this.ssId}) is failed`, e.message);
-            //throw e; 
+            throw e; 
         }
     }
 
@@ -362,6 +369,7 @@ export class Spreadsheet {
         }
         catch(e){
             console.error('addNewSheet failed!', e.message);
+            throw e;
         }
     }
 
@@ -374,16 +382,16 @@ export class Spreadsheet {
     
         await sheet.loadCells(`A${rowCount + 2}:E${rowCount + oneStepRowCount +2}`);
         let cell = await sheet.getCell(rowCount+1, 2);
-        Object.assign(cell, {value: `=FILTER('Шаг ${stepName}'!A2:A${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!A2:A${oneStepRowCount}))))`});   
+        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!A2:A${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!A2:A${oneStepRowCount})))))`});   
         cell = await sheet.getCell(rowCount+1, 3);
-        Object.assign(cell, {value: `=FILTER('Шаг ${stepName}'!B2:B${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!B2:B${oneStepRowCount}))))`});   
+        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!B2:B${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!B2:B${oneStepRowCount})))))`});   
         cell = await sheet.getCell(rowCount+1, 4);
-        Object.assign(cell, {value: `=FILTER('Шаг ${stepName}'!C2:C${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!C2:C${oneStepRowCount}))))`});   
+        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!C2:C${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!C2:C${oneStepRowCount})))))`});   
         for(let i = rowCount + 2; i < rowCount + oneStepRowCount + 2; i++){
             let cell = await sheet.getCell(i-1, 0);
             Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";"${stepName}")`});    
             cell = await sheet.getCell(i-1, 1);
-            Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";FILTER('Шаг ${stepName}'!A$1; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!A$1)))))`}); 
+            Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!A$1; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!A$1))))))`}); 
         }
         await sheet.saveUpdatedCells();
     }
