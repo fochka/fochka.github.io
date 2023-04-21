@@ -20,21 +20,12 @@ export class Spreadsheet {
             this.doc = new GoogleSpreadsheet(this.ssId);
             await this.doc.useServiceAccountAuth(apiSheetKey);
             await this.doc.loadInfo();
-            const sheet = await this.doc.sheetsByTitle[this.sheetName];
-            if (!sheet) throw new Error('Не найден лист "' + this.sheetName + '"');
-            let res = await sheet.getRows();
-            await sheet.loadCells({endColumnIndex: 6});
-            for (let i = 0; i < res.length; i++){
-                if (res[i]._rawData[2] !== undefined) res[i]._rawData[2] = res[i]._rawData[2].trim();
-            }
-            if(!(res) || (res.length < 1)){
-                throw new Error('There are no one rows after loading from Google')
-            }
-
-            // Add formuls to question and answers
             let steps = {};
-            for(let i = 0; i < res.length; i++){                
-                let stepName = res[i].step;
+            const allSheets = this.doc.sheetsByIndex;
+            for (let i = 0; i < allSheets.length; i++) {
+                if (!(allSheets[i].title.startsWith('Шаг'))) continue;
+                // Add formuls to question and answers        
+                let stepName = allSheets[i].title.substring(3).trim();
                 if((stepName) && (!Object.keys(steps).includes(stepName))){
                     let sheet = this.doc.sheetsByTitle['Шаг ' + stepName];
                     if (sheet) {
@@ -63,7 +54,7 @@ export class Spreadsheet {
                             position: JSON.parse(cell.value) || null,
                         };
                     }
-                    else {
+                    /*else {
                         let question = { value: res[i].question };
                         let answers = res.filter( x => x.step === stepName );
                         answers.forEach(x => { x.answer = JSON.stringify({ value: x.answer }) });
@@ -75,7 +66,7 @@ export class Spreadsheet {
                             nextSteps: nextSteps,
                             position: null,
                         };
-                    }
+                    }*/
                 }
             }
             this.graph = steps;
@@ -307,7 +298,6 @@ export class Spreadsheet {
     
             if(this.doc.sheetsByTitle[sheetName]) {
                 sheet = this.doc.sheetsByTitle[sheetName];
-                sheet.clear();
             } else {
                 sheet = await this.doc.addSheet({
                     "title": sheetName,
@@ -331,6 +321,12 @@ export class Spreadsheet {
                     if(!array[i][j] || !(array[i][j].value)) continue;
                     let cell = await sheet.getCell(i, array[i][j].columnIdx || j);
                     Object.assign(cell, array[i][j]);    
+                }
+            }
+            for (let i=array.length; i < sheet.rowCount; i++) {
+                for(let j=0; j<3; j++) {
+                    let cell = await sheet.getCell(i, j);
+                    Object.assign(cell, '');    
                 }
             }
             await sheet.saveUpdatedCells();
@@ -382,16 +378,16 @@ export class Spreadsheet {
     
         await sheet.loadCells(`A${rowCount + 2}:E${rowCount + oneStepRowCount +2}`);
         let cell = await sheet.getCell(rowCount+1, 2);
-        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!A2:A${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!A2:A${oneStepRowCount})))))`});   
+        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!A2:A${oneStepRowCount}; 'Шаг ${stepName}'!A2:A${oneStepRowCount} <> "adfgafdgdfg"))`});   
         cell = await sheet.getCell(rowCount+1, 3);
-        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!B2:B${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!B2:B${oneStepRowCount})))))`});   
+        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!B2:B${oneStepRowCount}; 'Шаг ${stepName}'!B2:B${oneStepRowCount} <> "adfgafdgdfg"))`});   
         cell = await sheet.getCell(rowCount+1, 4);
-        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!C2:C${oneStepRowCount}; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!C2:C${oneStepRowCount})))))`});   
+        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!C2:C${oneStepRowCount}; 'Шаг ${stepName}'!C2:C${oneStepRowCount} <> "adfgafdgdfg"))`});   
         for(let i = rowCount + 2; i < rowCount + oneStepRowCount + 2; i++){
             let cell = await sheet.getCell(i-1, 0);
             Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";"${stepName}")`});    
             cell = await sheet.getCell(i-1, 1);
-            Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!A$1; НЕ(ЕПУСТО(ЕСЛИОШИБКА('Шаг ${stepName}'!A$1))))))`}); 
+            Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!A$1; 'Шаг ${stepName}'!A$1 <> "adfgafdgdfg")))`}); 
         }
         await sheet.saveUpdatedCells();
     }
