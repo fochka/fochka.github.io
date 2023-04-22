@@ -1,24 +1,17 @@
+import Cookies from 'universal-cookie';
+const cookies = new Cookies();
 
-export default async function() {
+export async function getAllCafeInfo() {
     try {
-        /*/return [{ // <<<<< Delete on prod!
-            cafeId: '666',
-            cafeName: 'Тест редактор графов',
-            ssBackId: '1XxQm9w1zkwJ57p3U-1LQj-SPjyeBmjINL-e1NPnNDys',
-        }]/**/
-        /*/return [{ // <<<<< Delete on prod!
-            cafeId: '0',
-            cafeName: 'Мама Пицца',
-            ssBackId: '1-TgZbqNA0QeiE51pXMTHR_4SMBYd-My-_sD-nUak2oc',
-        },
-        { 
-            cafeId: '1',
-            cafeName: 'резерв Мама Пицца',
-            ssBackId: '1aWoBs_DQdy7jD2WnIGM8BXGdoF40E0fAOO4VBGEbKBY',
-        }]/**/
-        const response = await fetch(process.env.REACT_APP_FEEDMER_URL+`/getAllCafeInfo`, {
+        let token = cookies.get('token');
+        if (!token) {
+            token = prompt('Токен для авторизации');
+            if (!token) return;
+            setToken(token);
+        }
+        const response = await fetch(process.env.REACT_APP_FEEDMER_URL+`/getAllCafeInfo/${token}`, {
             credentials: 'include'
-          });
+        });
         const data = await response.text();
         return JSON.parse(data);
     } catch (e) {
@@ -26,7 +19,7 @@ export default async function() {
     }
 }
 
-function getCookie(key) {
-    var b = document.cookie.match("(^|;)\\s*" + key + "\\s*=\\s*([^;]+)");
-    return b ? b.pop() : "";
-  }
+export function setToken(token) {
+    const expires =  new Date(Date.now() + 3*30*24*60*60*1000);
+    cookies.set('token', token, { path: '/', expires: expires });
+}

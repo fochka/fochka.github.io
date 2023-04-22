@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import init, {StepComponent} from "./editor";
-import getAllCafeInfo from "./DBLib.js";
-import "./styles.css";
+import { getAllCafeInfo, setToken } from "./DBLib.js";
+import "./styles.css"; 
 import { Spreadsheet } from "./spreadsheet.js";
 import Cookies from 'universal-cookie';
 
@@ -136,6 +136,13 @@ function App() {
   const [options, setOptions] = useState('');
   const [displayLoading, setDisplayLoading] = useState('block');
   const [displaySaving, setDisplaySaving] = useState('none');
+
+  let path = window.location.pathname;
+  path = path.split('/');
+  if ((path.length > 2) && path[1] === 'set-token') {
+    setToken(path[2]);
+    window.location.pathname = '';
+  }
 
   let search = window.location.search;
   search = search.split('=');
