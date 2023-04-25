@@ -1,5 +1,6 @@
 import React from "react";
 import { Node, Socket, Control } from "rete-react-render-plugin";
+import { Selector } from "./custumComponents"
 
 export class StepNode extends Node {
   
@@ -54,10 +55,20 @@ export class StepNode extends Node {
           />
         ))}
         {/* Outputs */}
-        {outputs.map(output => (
+        <div>
+        {outputs.map((output, key) => (
+          <Selector
+            output={output}
+            outputKey={output.key}
+            innerRef={bindSocket}
+          />
+        ))
+        
+        
+        /*outputs.map(output => (
           <div className="output" key={output.key}>
             <div className="output-title" onClick={() => this.onClick(output)} >{
-              JSON.parse(output.name).value || ''/*.value*/
+              JSON.parse(output.name).value || ''
             }</div>
             <Socket
               type="output"
@@ -65,8 +76,10 @@ export class StepNode extends Node {
               io={output}
               innerRef={bindSocket}
             />
+            <Selector/>
           </div>
-        ))}
+        ))*/}
+        </div>
       </div>
     );
   }

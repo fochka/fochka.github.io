@@ -1,6 +1,6 @@
 //import { useState } from "react";
 const POS_COLUMN_IDX = 23;
-const oneStepRowCount = 30; // Не менять
+const ONE_STEP_ROW_COUNT = 30; // Не менять
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const apiSheetKey = require('./client_secret_google_sheets.json');
         //const [error, setError] = useState(Error());
@@ -10,6 +10,7 @@ export class Spreadsheet {
         this.graph = null;
         this.sheetName =  'Граф';
         this.sheetsToDelete = [];
+        this.items = [];
     }
     loadSSGraph = async (cafeId, ssId) => {        
         try{
@@ -32,10 +33,15 @@ export class Spreadsheet {
                         await sheet.loadCells({ endColumnIndex: 3 });
                         let cell = sheet.getCell(0, 0);
                         let question = { value: cell.value, formula: cell.formula };
+                        
+                        if (sheet.rowCount < ONE_STEP_ROW_COUNT) {
+                            await sheet.resize({ rowCount: ONE_STEP_ROW_COUNT, columnCount: sheet.columnCount });
+                            await sheet.loadCells({ endColumnIndex: 3 });
+                        }
 
                         let answers = [];
                         let nextSteps = [];
-                        for (let j = 1; j < oneStepRowCount; j++) {
+                        for (let j = 1; j < ONE_STEP_ROW_COUNT; j++) {
                             let cell = sheet.getCell(j, 0);
                             if ((cell.value) || (cell.formula)) {
                                 let answer = JSON.stringify({ value: cell.value, formula: cell.formula })
@@ -45,7 +51,7 @@ export class Spreadsheet {
                                 nextSteps.push(JSON.stringify({ value: cell.value, formula: cell.formula }));
                             }
                         }
-                        await sheet.loadCells('A1:Z1');
+                        await sheet.loadCells('X1');
                         cell = sheet.getCell(0, POS_COLUMN_IDX);
                         steps[stepName] = {
                             question: question,
@@ -70,7 +76,7 @@ export class Spreadsheet {
                 }
             }
             this.graph = steps;
-
+            await this.loadItems();
             console.log('Graph are loaded');
             return true;
         }
@@ -89,6 +95,24 @@ export class Spreadsheet {
         const sheet = this.doc.sheetsByTitle[tittle];
         const url = (sheet)? this.getSheetUrlById(sheet.sheetId) : null;
         return url;
+    }
+
+    loadItems = async () => {
+        try {
+            const sheet = this.doc.sheetsByTitle['Общий справочник'];
+            if (!sheet) throw new Error('Лист "Общий справочник" не найден');
+            let rows = await sheet.getRows();
+            let rowsWithoutEmptyNames = rows.filter(x => (x._rawData.length >= 3 && x._rawData[3] !== ""));
+            for (let i = 0; i < rowsWithoutEmptyNames.length; i++) {
+                let name = "";
+                if (rowsWithoutEmptyNames[i]._rawData[0] !== undefined) name = rowsWithoutEmptyNames[i]._rawData[0].trim();
+                this.items.push({name : name});
+            }
+        }
+        catch (e) {
+            console.error(e);
+        }
+
     }
 
     remeberToDeleteStep = (stepName) => {                
@@ -156,20 +180,6 @@ export class Spreadsheet {
 
         return reteGraph;
     }
-    
-    loadPositions = async (stepName) => {     
-        //{valueRenderOption: 'FORMULA'}   
-        try{
-            const sheet = await this.doc.sheetsByTitle['Шаг ' + stepName];
-            if(!sheet) return;
-            await sheet.loadCells('A1:Z1');
-            let cell = sheet.getCell(0, POS_COLUMN_IDX);
-            return JSON.parse(cell.value)
-        }
-        catch(e){
-            console.error(`Cannot load coordinates for step = ${stepName}`, Error(e.message || e));
-        }
-    }
 
     findNodeIdxByStep = (reteGraph, step) => {
         for(let node in reteGraph.nodes){
@@ -182,7 +192,7 @@ export class Spreadsheet {
     deleteSheets = async(sheetsToDelete, stepsCount) => {
         if(!sheetsToDelete || !this.sheetName || (sheetsToDelete.length < 1)) return;
         const graphSheet = await this.doc.sheetsByTitle[this.sheetName];
-        const rowCount = (sheetsToDelete.length + stepsCount) * oneStepRowCount + 1;
+        const rowCount = (sheetsToDelete.length + stepsCount) * ONE_STEP_ROW_COUNT + 1;
         await graphSheet.loadCells('A1:A' + rowCount);
         for(let i = 0; i < sheetsToDelete.length; i++){        
             const sheet = this.doc.sheetsByTitle['Шаг ' + sheetsToDelete[i]];
@@ -197,7 +207,7 @@ export class Spreadsheet {
                     //endIdx = j;
                 }
             }
-            await graphSheet.clearRows({start: startIdx+1, end: startIdx+oneStepRowCount});  
+            await graphSheet.clearRows({start: startIdx+1, end: startIdx+ONE_STEP_ROW_COUNT});  
         }
         this.sheetsToDelete = [];        
     }
@@ -278,7 +288,7 @@ export class Spreadsheet {
             for(let node in reteGraph.nodes){
                 let ssStep = reteGraph.nodes[node].name;
                 await this.addStepToGraphSheet(ssStep, rowIdx);
-                rowIdx += oneStepRowCount;
+                rowIdx += ONE_STEP_ROW_COUNT;
             }
             this.sheetName = oldSheetName;
         }
@@ -291,23 +301,19 @@ export class Spreadsheet {
 
     printArrayToSheet = async(array, sheetName) => {
         try {
-            let sheet;
-            /*const doc = new GoogleSpreadsheet(this.ssId);
-            await doc.useServiceAccountAuth(apiSheetKey);
-            await doc.loadInfo();*/
-    
+            let sheet;    
             if(this.doc.sheetsByTitle[sheetName]) {
                 sheet = this.doc.sheetsByTitle[sheetName];
             } else {
                 sheet = await this.doc.addSheet({
                     "title": sheetName,
                     "gridProperties": {
-                        "rowCount": oneStepRowCount,
+                        "rowCount": ONE_STEP_ROW_COUNT,
                         "columnCount": 30
                     }
                 });
             }
-    
+            await sheet.clear('A1:C'+ONE_STEP_ROW_COUNT);
             await sheet.loadCells(['A1:Z1', 'A1:C'+array.length]);
 
             if (array.length === 0) {
@@ -323,13 +329,7 @@ export class Spreadsheet {
                     Object.assign(cell, array[i][j]);    
                 }
             }
-            for (let i=array.length; i < sheet.rowCount; i++) {
-                for(let j=0; j<3; j++) {
-                    let cell = await sheet.getCell(i, j);
-                    Object.assign(cell, '');    
-                }
-            }
-            await sheet.saveUpdatedCells();
+            await sheet.saveUpdatedCells();    
         } catch (e) { 
             console.error(`printing to spreadsheet (id: ${this.ssId}) is failed`, e.message);
             throw e; 
@@ -349,7 +349,7 @@ export class Spreadsheet {
                  sheet = await this.doc.addSheet({
                     "title": 'Шаг ' + stepName,
                     "gridProperties": {
-                        "rowCount": oneStepRowCount,
+                        "rowCount": ONE_STEP_ROW_COUNT,
                         "columnCount": 30
                     }
                 });
@@ -373,59 +373,22 @@ export class Spreadsheet {
         const sheet = await this.doc.sheetsByTitle[this.sheetName];
         if(rowCount === undefined) {
             rowCount = (await sheet.getRows()).length || 0;
-            rowCount = Math.ceil(rowCount / oneStepRowCount) * oneStepRowCount;
+            rowCount = Math.ceil(rowCount / ONE_STEP_ROW_COUNT) * ONE_STEP_ROW_COUNT;
         }
     
-        await sheet.loadCells(`A${rowCount + 2}:E${rowCount + oneStepRowCount +2}`);
+        await sheet.loadCells(`A${rowCount + 2}:E${rowCount + ONE_STEP_ROW_COUNT +2}`);
         let cell = await sheet.getCell(rowCount+1, 2);
-        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!A2:A${oneStepRowCount}; 'Шаг ${stepName}'!A2:A${oneStepRowCount} <> "adfgafdgdfg"))`});   
+        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!A2:A${ONE_STEP_ROW_COUNT}; 'Шаг ${stepName}'!A2:A${ONE_STEP_ROW_COUNT} <> "adfgafdgdfg"))`});   
         cell = await sheet.getCell(rowCount+1, 3);
-        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!B2:B${oneStepRowCount}; 'Шаг ${stepName}'!B2:B${oneStepRowCount} <> "adfgafdgdfg"))`});   
+        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!B2:B${ONE_STEP_ROW_COUNT}; 'Шаг ${stepName}'!B2:B${ONE_STEP_ROW_COUNT} <> "adfgafdgdfg"))`});   
         cell = await sheet.getCell(rowCount+1, 4);
-        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!C2:C${oneStepRowCount}; 'Шаг ${stepName}'!C2:C${oneStepRowCount} <> "adfgafdgdfg"))`});   
-        for(let i = rowCount + 2; i < rowCount + oneStepRowCount + 2; i++){
+        Object.assign(cell, {value: `=ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!C2:C${ONE_STEP_ROW_COUNT}; 'Шаг ${stepName}'!C2:C${ONE_STEP_ROW_COUNT} <> "adfgafdgdfg"))`});   
+        for(let i = rowCount + 2; i < rowCount + ONE_STEP_ROW_COUNT + 2; i++){
             let cell = await sheet.getCell(i-1, 0);
             Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";"${stepName}")`});    
             cell = await sheet.getCell(i-1, 1);
             Object.assign(cell, {value: `=ЕСЛИ(ЕПУСТО(C${i});"";ЕСЛИОШИБКА(FILTER('Шаг ${stepName}'!A$1; 'Шаг ${stepName}'!A$1 <> "adfgafdgdfg")))`}); 
         }
         await sheet.saveUpdatedCells();
-    }
-    
-
-    getQuestion = async(step) => { //change to UserId
-        try{
-            if(!this.graph) throw Error('Graph is not loaded')
-            let row = this.graph.find(x => x.step === step);
-            return row.question;
-        } catch (e){
-            console.error(`Cannot get question for step ${step}`, e.message || e);
-        }
-    }
-    getAnswers = async(step) => {
-        try{
-            if(!this.graph) throw Error('Graph is not loaded')
-            let answers = this.graph.filter(x => x.step === step/* && x.answer !== "anyText"*/)
-            let filteredButtonRows = [];
-            answers.forEach(x => { if (!filteredButtonRows.includes(x.answer)) filteredButtonRows.push(x.answer) } );
-            return filteredButtonRows;
-        } catch (e){
-            console.error(`Cannot get buttons for step ${step}`, e.message || e);
-            return [];
-        }
-    }
-
-    getTimes = async () => {
-        try{
-            if(!this.graph) throw Error('Graph is not loaded')
-            let filteredButtonRows = this.graph.filter(x => x.step === global.stepOfTime && x.answer !== "anyText");
-            let times = [];
-            filteredButtonRows.forEach(x => times.push(x.answer));
-            //times = times.filter(x => isTimeButton(x));
-            return times;
-        } catch (e){
-            console.error(`Cannot get times`, e.message || e);
-            return [];
-        }
     }
 }
