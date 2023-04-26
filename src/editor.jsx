@@ -58,23 +58,6 @@ export default async function(container, cafe) {
   try {
     if(!cafe) return;
     global.editorIsLoaded = false;
-    /*const cafes = await cafePromise;
-    let cafe;
-    if(cafeId)
-      cafe = cafes.find(val=>  val.cafeId === cafeId);
-    if(!cafe){
-      let options = [];
-      for(let i = 0; i < cafes.length; i++){
-        options.push(<option key={cafes[i].cafeId} value={cafes[i].cafeId}>{cafes[i].cafeName}</option>)
-      }
-      return (<form action="" method="GET">
-        <input type="select" label="Multiple Select" multiple>
-        <option disabled>Выберите кафе</option>
-          {options}
-        </input>
-        <p><input type="submit" value="Выбрать"></input></p>
-      </form>);
-    }*/
     await ss.loadSSGraph(cafe.cafeId, cafe.ssBackId);
 
     var editor = new Rete.NodeEditor("demo@0.1.0", container);

@@ -1,30 +1,30 @@
 import React from "react";
 import { Socket } from "rete-react-render-plugin";
-const {useState} = React;
 
 export class Selector extends React.Component {
-    state = { isOpen: false, outName: JSON.parse(this.props.output.name).value || '', readOnly: false }
+    state = { isOpen: false, outName: JSON.parse(this.props.output.name || {}).value || '', readOnly: false }
         
     handleClick = e => {
       if (!this.state.readOnly)
         this.setState({ isOpen: true })
     }
     handleBlur = (e) => {
-      if (!e.currentTarget.value) return
-      //this.setState({ outName: e.currentTarget.value });
+      if (!e.currentTarget.value) return;
+      this.state.outName = e.currentTarget.value;
       const obj = JSON.parse(this.props.output.name);
       obj.value = e.currentTarget.value;
       this.props.output.name = JSON.stringify(obj);
       this.props.output.key = JSON.stringify(obj);
-      this.props.output.node.outputs.set(this.props.outputKey, this.props.output);
+      this.props.output.node.outputs.delete(this.props.outputKey);
+      this.props.output.node.outputs.set(this.props.output.key, this.props.output);
       this.props.output.node.update();
       this.setState({ isOpen: false });
     }
   
     render() {
       const { isOpen } = this.state; 
-      const name = JSON.parse(this.props.output.name);
-      if (name.formula) this.setState({readOnly: true});
+      const name = JSON.parse(this.props.output.name || {});
+      if (name && name.formula) this.state.readOnly = true;
   
       return (
         <div>
